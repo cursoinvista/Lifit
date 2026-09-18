@@ -13,11 +13,11 @@ export function buildSpectatorScene(container) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0e13);
 
-  const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 50);
-  camera.position.set(3.2, 2.6, 3.6);
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 50);
+  camera.position.set(5.5, 3.4, 6.2);
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 1.6, 0);
+  controls.target.set(0, 2.7, 0);
   controls.enableDamping = true;
 
   scene.add(new THREE.HemisphereLight(0xbfd9ff, 0x1a1a1a, 1.1));

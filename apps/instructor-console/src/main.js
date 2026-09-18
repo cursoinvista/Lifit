@@ -4,6 +4,7 @@
 import { AnnexOneRubric, ScenarioEngine } from '@lifit/curriculum';
 import { InstructorClient } from './net/InstructorClient.js';
 import { buildSpectatorScene } from './scene/spectatorScene.js';
+import { LiftView } from './lift/LiftView.js';
 import { initFaultPanel } from './panels/FaultPanel.js';
 import { renderObjectives } from './panels/ObjectivesPanel.js';
 import { initAnnexOnePanel } from './panels/AnnexOnePanel.js';
@@ -20,6 +21,7 @@ const wsUrl = params.get('server') ?? `ws://${location.hostname}:8787`;
 const el = (id) => document.getElementById(id);
 
 const spectator = buildSpectatorScene(el('viewport'));
+const liftView = new LiftView({ cabinGroup: spectator.cabinGroup });
 const scenario = new ScenarioEngine(moduleId, { guided: true });
 scenario.start();
 
@@ -40,6 +42,7 @@ const client = new InstructorClient({ url: wsUrl, sessionId, participantId: inst
 function applyLiftState(liftSnapshot) {
   el('status-lift-state').textContent = liftSnapshot.state;
   replayLog.append(`estado do lift -> ${liftSnapshot.state}`);
+  liftView.applyAuthoritativeState(liftSnapshot);
 }
 
 function applyActiveFault(activeFault) {
@@ -115,8 +118,12 @@ function refreshObjectives() {
 setInterval(refreshObjectives, 5000);
 refreshObjectives();
 
-function loop() {
+let lastFrameTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
+  liftView.update(dt);
   spectator.render();
   requestAnimationFrame(loop);
 }
-loop();
+requestAnimationFrame(loop);
