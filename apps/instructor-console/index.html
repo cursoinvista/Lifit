@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SLU WebXR - Console do instrutor</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: #0b0e12; color: #dfe8f0; font-family: system-ui, sans-serif; }
+      #app { display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: 1fr; height: 100%; }
+      #viewport-col { display: flex; flex-direction: column; min-width: 0; }
+      #viewport { flex: 1; position: relative; }
+      #viewport canvas { display: block; width: 100%; height: 100%; }
+      #status-bar { padding: 8px 12px; font-size: 12px; background: #10151c; border-top: 1px solid #1e2733; display: flex; gap: 16px; flex-wrap: wrap; }
+      #status-bar b { color: #7fd0ff; }
+      #panels { overflow-y: auto; border-left: 1px solid #1e2733; }
+      .panel { border-bottom: 1px solid #1e2733; padding: 10px 12px; }
+      .panel h2 { font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .05em; color: #9fb3c8; }
+      .fault-btn { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 6px 8px; background: #1c2632; color: #dfe8f0; border: 1px solid #2c3a4a; border-radius: 6px; cursor: pointer; font-size: 12px; }
+      .fault-btn:hover { background: #26333f; }
+      #clear-fault-btn { background: #3a2020; border-color: #5a2a2a; }
+      .obj-row { font-size: 12px; padding: 3px 0; border-bottom: 1px dashed #1e2733; }
+      .annex-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed #1e2733; }
+      .annex-row select, .annex-row input { background: #12171e; color: #dfe8f0; border: 1px solid #2c3a4a; border-radius: 4px; }
+      .annex-row input[type="text"] { width: 100%; margin-top: 2px; grid-column: 1 / span 2; }
+      #finalize-btn { margin-top: 8px; width: 100%; padding: 8px; background: #1c72d8; color: white; border: none; border-radius: 6px; cursor: pointer; }
+      #annex-total { font-size: 12px; margin-top: 6px; color: #9fb3c8; }
+      #telemetry-log, #replay-log { font-family: ui-monospace, monospace; font-size: 11px; max-height: 160px; overflow-y: auto; white-space: pre-wrap; color: #8fb0c8; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="viewport-col">
+        <div id="viewport"></div>
+        <div id="status-bar">
+          <span>Sessao: <b id="status-session">-</b></span>
+          <span>Perfil: <b id="status-profile">-</b></span>
+          <span>Estado do lift: <b id="status-lift-state">-</b></span>
+          <span>Falha ativa: <b id="status-fault">nenhuma</b></span>
+          <span>Checklist: <b id="status-checklist">0/0</b></span>
+        </div>
+      </div>
+      <div id="panels">
+        <section class="panel" id="panel-faults">
+          <h2>Falhas (armar apenas dentro das pre-condicoes)</h2>
+          <div id="fault-buttons"></div>
+          <button id="clear-fault-btn" class="fault-btn">Cancelar falha ativa</button>
+        </section>
+
+        <section class="panel" id="panel-objectives">
+          <h2>Objetivos do bloco atual</h2>
+          <div id="objectives-list"></div>
+        </section>
+
+        <section class="panel" id="panel-annex1">
+          <h2>Annex 1 - avaliacao (aluno atual)</h2>
+          <div id="annex1-form"></div>
+          <div id="annex-total">Total: 0 | Sugestao: -</div>
+          <button id="finalize-btn">Confirmar e finalizar (instrutor)</button>
+        </section>
+
+        <section class="panel" id="panel-telemetry">
+          <h2>Telemetria e eventos</h2>
+          <div id="telemetry-log"></div>
+        </section>
+
+        <section class="panel" id="panel-replay">
+          <h2>Linha do tempo (replay)</h2>
+          <div id="replay-log"></div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

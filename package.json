@@ -1,0 +1,20 @@
+{
+  "name": "lifit-slu-webxr",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Treinamento imersivo WebXR do modulo SLU (Service Lift User) - ambiente digital auditavel conforme GWO Requirements for Training V14",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "dev:server": "npm run dev --workspace apps/session-server",
+    "dev:quest": "npm run dev --workspace apps/quest",
+    "dev:console": "npm run dev --workspace apps/instructor-console"
+  },
+  "license": "UNLICENSED"
+}

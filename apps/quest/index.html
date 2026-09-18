@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SLU WebXR - Aluno</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html, body { margin: 0; height: 100%; background: #05070a; overflow: hidden; }
+      canvas { display: block; }
+      #hud {
+        position: fixed; top: 0; left: 0; right: 0; padding: 10px 14px;
+        font-family: system-ui, sans-serif; color: #cfe8ff; font-size: 13px;
+        background: linear-gradient(to bottom, rgba(0,0,0,.55), transparent);
+        pointer-events: none; z-index: 10;
+      }
+      #enter-vr {
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        padding: 12px 22px; font-family: system-ui, sans-serif; font-size: 15px;
+        background: #1c72d8; color: white; border: none; border-radius: 8px;
+        cursor: pointer; z-index: 10;
+      }
+      #enter-vr:disabled { background: #444; cursor: not-allowed; }
+      #fallback-note { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+        font-family: system-ui, sans-serif; color: #9fb3c8; font-size: 12px; z-index: 10; max-width: 80vw; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="hud">SLU WebXR - Cliente do aluno (simulador, sem controle de elevador real)</div>
+    <div id="fallback-note"></div>
+    <button id="enter-vr" disabled>Verificando suporte a WebXR...</button>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
