@@ -66,6 +66,18 @@ de depuracao desktop: clique nos objetos da cena para simular o raycast dos
 joysticks Touch Plus. Em um Meta Quest 3/3S real, use o Meta Browser ou
 Wolvic e o botao "Enter VR".
 
+### Visualizacao cinematografica (nao operacional)
+
+`http://localhost:5174/cinematic.html?session=SLU-CINE-001` mostra o avatar
+do aluno em terceira pessoa dentro da cabine, subindo pelo interior da
+torre, com camera orbital automatica. E uma pagina separada do console
+operacional (`cinematic.js`/`cinematicScene.js`), feita so para demonstrar
+visualmente a subida - ela mesma conecta como `STUDENT` e conduz uma
+sequencia automatica (checklist -> portas -> subida -> parada ->
+estacionamento), mas a transicao de estado continua validada pelo mesmo
+`session-server` autoritativo, nao e uma animacao desconectada da maquina
+de estados real.
+
 ## Testes
 
 ```bash
