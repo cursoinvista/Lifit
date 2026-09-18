@@ -9,6 +9,12 @@ const TOWER_RADIUS = 4.5;
 const TOWER_HEIGHT = 8;
 const GROUND_Y = 0.9;
 const TOP_Y = 4.5;
+const ARM_LEN = 0.5;
+const ARM_REST_ROTATION = 0.15; // braco caido ao lado do corpo
+// Rotacao no eixo X do ombro: com o braco pendendo inicialmente para -Y,
+// um angulo positivo o projeta para -Z (onde fica o painel, na parede de
+// tras). Ver a posicao do panelGroup (z=-0.48) e do avatar (z=-0.12).
+const ARM_PRESS_ROTATION = 1.55;
 
 function buildAvatar() {
   const avatar = new THREE.Group();
@@ -36,13 +42,27 @@ function buildAvatar() {
   beltBuckle.position.set(0, 0.78, 0.14);
   avatar.add(beltBuckle);
 
+  // Braco esquerdo: fixo, so decorativo.
   const armMat = torsoMat;
-  for (const side of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.55, 8), armMat);
-    arm.position.set(side * 0.26, 0.88, 0.03);
-    arm.rotation.x = -0.12;
-    avatar.add(arm);
-  }
+  const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, ARM_LEN, 8), armMat);
+  leftArm.position.set(-0.26, 0.88, 0.03);
+  leftArm.rotation.x = ARM_REST_ROTATION;
+  avatar.add(leftArm);
+
+  // Braco direito: pivotado no ombro para poder "esticar" ate o painel.
+  const shoulderR = new THREE.Group();
+  shoulderR.position.set(0.24, 1.16, 0.04);
+  shoulderR.rotation.x = ARM_REST_ROTATION;
+  avatar.add(shoulderR);
+  const rightArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, ARM_LEN, 8), armMat);
+  rightArmMesh.position.set(0, -ARM_LEN / 2, 0);
+  shoulderR.add(rightArmMesh);
+  const hand = new THREE.Mesh(
+    new THREE.SphereGeometry(0.055, 10, 10),
+    new THREE.MeshStandardMaterial({ color: 0xd9b38c, roughness: 0.7 }),
+  );
+  hand.position.set(0, -ARM_LEN, 0);
+  shoulderR.add(hand);
 
   const headMat = new THREE.MeshStandardMaterial({ color: 0xd9b38c, roughness: 0.7 });
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 16), headMat);
@@ -54,8 +74,16 @@ function buildAvatar() {
   helmet.position.set(0, 1.52, 0);
   avatar.add(helmet);
 
-  return avatar;
+  return { avatar, shoulderR };
 }
+
+const BUTTON_SPECS = [
+  { id: 'up', color: 0x4a90d9, dy: 0.15 },
+  { id: 'down', color: 0x4ad991, dy: 0.075 },
+  { id: 'stop', color: 0xd9c14a, dy: 0 },
+  { id: 'resume', color: 0x4adede, dy: -0.075 },
+  { id: 'park', color: 0xd94a4a, dy: -0.15 },
+];
 
 function buildCabin() {
   const cabinGroup = new THREE.Group();
@@ -78,40 +106,53 @@ function buildCabin() {
     color: 0x3a4a5c, roughness: 0.5, metalness: 0.2, transparent: true, opacity: 0.3, side: THREE.DoubleSide,
   });
   const wallGeoLR = new THREE.PlaneGeometry(1.06, 1.8);
-  const wallGeoFB = new THREE.PlaneGeometry(1.06, 1.8);
   const left = new THREE.Mesh(wallGeoLR, wallMat); left.position.set(-0.53, 0.9, 0); left.rotation.y = Math.PI / 2; cabinGroup.add(left);
   const right = new THREE.Mesh(wallGeoLR, wallMat); right.position.set(0.53, 0.9, 0); right.rotation.y = Math.PI / 2; cabinGroup.add(right);
-  const back = new THREE.Mesh(wallGeoFB, wallMat); back.position.set(0, 0.9, -0.53); cabinGroup.add(back);
-  const front = new THREE.Mesh(wallGeoFB, wallMat); front.position.set(0, 0.9, 0.53); cabinGroup.add(front);
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(1.06, 1.8), wallMat); back.position.set(0, 0.9, -0.53); cabinGroup.add(back);
 
-  const panel = new THREE.Mesh(
-    new THREE.BoxGeometry(0.22, 0.3, 0.04),
+  // Porta frontal: duas folhas que deslizam para os lados (doc: "door.main").
+  const doorMat = new THREE.MeshStandardMaterial({
+    color: 0x5c7086, roughness: 0.4, metalness: 0.35, transparent: true, opacity: 0.55, side: THREE.DoubleSide,
+  });
+  const doorLeafGeo = new THREE.PlaneGeometry(0.53, 1.8);
+  const doorLeafLeft = new THREE.Mesh(doorLeafGeo, doorMat);
+  doorLeafLeft.position.set(-0.265, 0.9, 0.53);
+  cabinGroup.add(doorLeafLeft);
+  const doorLeafRight = new THREE.Mesh(doorLeafGeo, doorMat);
+  doorLeafRight.position.set(0.265, 0.9, 0.53);
+  cabinGroup.add(doorLeafRight);
+
+  // Painel de controle na parede de tras, de frente para o avatar.
+  const panelGroup = new THREE.Group();
+  panelGroup.position.set(0, 1.05, -0.48);
+  cabinGroup.add(panelGroup);
+  const panelBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.26, 0.4, 0.04),
     new THREE.MeshStandardMaterial({ color: 0x14181d }),
   );
-  panel.position.set(0.45, 1.15, -0.5);
-  cabinGroup.add(panel);
-  const btnColors = [0x4a90d9, 0xd9c14a, 0xd94a4a];
-  btnColors.forEach((c, i) => {
-    const btn = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.025, 0.025, 0.02, 12),
-      new THREE.MeshStandardMaterial({ color: c }),
-    );
+  panelGroup.add(panelBody);
+
+  const buttons = {};
+  for (const spec of BUTTON_SPECS) {
+    const mat = new THREE.MeshStandardMaterial({ color: spec.color, emissive: 0x000000, emissiveIntensity: 0 });
+    const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.025, 12), mat);
     btn.rotation.x = Math.PI / 2;
-    btn.position.set(0.45, 1.24 - i * 0.08, -0.47);
-    cabinGroup.add(btn);
-  });
+    btn.position.set(0, spec.dy, 0.03);
+    panelGroup.add(btn);
+    buttons[spec.id] = btn;
+  }
 
   const cableMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
   const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 6), cableMat);
   cable.position.set(0, 2.6, 0);
   cabinGroup.add(cable);
 
-  const avatar = buildAvatar();
-  avatar.position.set(0, 0, 0.05);
+  const { avatar, shoulderR } = buildAvatar();
+  avatar.position.set(0, 0, -0.12);
   cabinGroup.add(avatar);
 
   cabinGroup.position.set(0, GROUND_Y, 0);
-  return { cabinGroup, avatar };
+  return { cabinGroup, avatar, shoulderR, buttons, panelGroup, doorLeafLeft, doorLeafRight };
 }
 
 function buildTower() {
@@ -178,7 +219,7 @@ export function buildCinematicScene(container) {
   scene.fog = new THREE.Fog(0x0a0f16, 5, 15);
 
   scene.add(buildTower());
-  const { cabinGroup, avatar } = buildCabin();
+  const { cabinGroup, avatar, shoulderR, buttons, panelGroup, doorLeafLeft, doorLeafRight } = buildCabin();
   scene.add(cabinGroup);
 
   scene.add(new THREE.HemisphereLight(0x9fbbdd, 0x1a1f26, 0.9));
@@ -200,5 +241,9 @@ export function buildCinematicScene(container) {
   window.addEventListener('resize', resize);
   resize();
 
-  return { scene, camera, renderer, cabinGroup, avatar, rig, resize, GROUND_Y, TOP_Y };
+  return {
+    scene, camera, renderer, cabinGroup, avatar, shoulderR, buttons, panelGroup,
+    doorLeafLeft, doorLeafRight, rig, resize, GROUND_Y, TOP_Y,
+    ARM_REST_ROTATION, ARM_PRESS_ROTATION,
+  };
 }
